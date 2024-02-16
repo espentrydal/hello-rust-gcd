@@ -1,25 +1,33 @@
 use std::str::FromStr;
 use std::env;
 
+use actix_web::{web, App, HttpResponse, HttpServer};
+
 fn main() {
-    let mut numbers = Vec::new();
+    let server = HttpServer::new(|| {
+        App::new()
+            .route("/", web::get().to(get_index))
+    });
 
-    for arg in env::args().skip(1) {
-        numbers.push(u64::from_str(&arg)
-                     .expect("error parsing argument"));
-    }
+    println!("Serving on http://localhost:3000...");
+    server
+        .bind("127.0.0.1:3000").expect("error binding server to address")
+        .run().expect("error running server");
+}
 
-    if numbers.len() == 0 {
-        eprintln!("Usage: gcd NUMBER ...");
-        std::process::exit(1);
-    }
-
-    let mut d = numbers[0];
-    for m in &numbers[1..] {
-        d = gcd(d, *m);
-    }
-
-    println!("The greatest common divisor of {:?} is {}", numbers, d);
+fn get_index() -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("text/html")
+        .body(
+            r#"
+                <title>GCD Calculator</title>
+                <form action="/gcd" method="post">
+                <input type="text" name="n"/>
+                <input type="text" name="m"/>
+                <button type="submit">Compute GCD</button>
+                </form>
+            "#,
+        )
 }
 
 fn gcd(mut n: u64, mut m: u64) -> u64 {
